@@ -1,0 +1,110 @@
+import os
+from pathlib import Path
+from collections import defaultdict
+
+def polygon(input1, output1):
+    lines = []
+    with open(input1) as inputfile:
+        lines = inputfile.readlines()
+
+    count = -1
+    completed = [] # keep track which are completed so we don't process the same height twice
+    
+    previous_max = 0 # maximum area so far
+    max_y = 0 # The y value that has the largest area so far
+    completed = [] # keep track which are completed so we don't process the same height twice
+    vertice_dict = defaultdict(dict)
+    for line in lines:
+        if count == -1:
+            # First line has the number of vertices
+            vertices = line
+            count = count + 1
+            continue
+        else:
+            # Get next vertice
+            x_axis = line.split(" ")[0]
+            y_axis = line.split(" ")[1]
+            vertice_dict[count]['x'] = x_axis 
+            vertice_dict[count]['y'] = y_axis
+            count = count + 1
+    
+    # loop thru the vertices in order,  track largest area under each height (y )
+    count = 0 # Our dictionary starts at 0
+    while int(count) < int(vertices):
+        
+        # for the height (y) and keep a max  rectangle size
+        y = vertice_dict[count]['y']
+        if y in completed:
+            # Already processed this height, so skip it
+            count = count + 1
+            continue
+        # Call calc_area function to calculate max area for this y/height
+        current_y_area = int(calc_area(y, vertices, vertice_dict))
+        completed.append(y)  # Add the height to completed list
+        
+        if previous_max < current_y_area:
+            previous_max = current_y_area # if this new area of y-height is bigger, then set the max area
+            max_y = y
+        count = count + 1
+    print("Hello max is ", previous_max)
+    print("The y value with biggest area is ", max_y)
+    # Print the max to the output file
+    file = open(output, "w")
+    file.write(str(previous_max))
+    file.close
+
+def calc_area(y, vertices, vertice_dict):
+    # Calculate the area of rectangle of height = y
+    if int(y) == 0:
+        return 0
+    
+    area = 0
+    initial_width = -1
+    current_width = 0
+    max_area = -1
+    count = -1
+    while count < (int(vertices) - 1):
+        count = count + 1
+        width = vertice_dict[count]['x']
+        height = vertice_dict[count]['y']
+        #print("x:" + str(width) + " y:" + str(height) )
+        if int(height) < int(y):
+            # lower height than our y value, reset the initial width
+            initial_width = -1
+            continue
+        elif int(height) >= int(y):
+            #calculate area
+            if initial_width == -1:
+                initial_width = width
+            #print("widths: " , initial_width, width)
+            if int(width) > int(initial_width):
+                current_width = int(width) - int(initial_width)
+            if int(width) == int(initial_width):
+                area = 0
+            else:
+                
+                area = int(y) * current_width
+                if max_area == -1:
+                    max_area = area
+                else:
+                    if max_area < area:
+                        max_area = area
+                #print("Max area so far is ", max_area)
+
+    return max_area
+
+  
+        
+        
+        
+if __name__ == "__main__":
+    base_dir = Path(__file__).parent.absolute()
+    
+    print("base directory is ", base_dir)
+    # define the input directory
+    input_dir = os.path.join(base_dir, 'polygon_inputs')
+    input = input_dir + "\input-4.txt"
+    output_dir = os.path.join(base_dir, 'polygon_outputs')
+    output = output_dir + "\output1.txt"
+    print("The input file used is ", input)
+    polygon(input, output)
