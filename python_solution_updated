@@ -1,0 +1,148 @@
+
+import os
+from pathlib import Path
+
+
+def polygon(input1, output1):
+    lines = []
+    with open(input1) as inputfile:
+        lines = inputfile.readlines()
+
+    count = -1
+   
+    processed_y = 0
+    
+    max_area = 0 # Max area so far
+    prev_max_area_height = 0 # Previous height of the maximum area
+    starting_width = {}
+    
+    area = 0
+    discard_list = []   # List of the heights to discard
+    
+    prev_y = -1
+    for line in lines:
+        
+        count = count + 1
+        
+        if count == 0:
+            # First line has the number of vertices
+            vertices = line
+            continue
+        
+        # Get x and y vertice
+        x_axis = (int)(line.split(" ")[0])
+        y_axis = (int)(line.split(" ")[1])
+       
+            
+        if y_axis == 0 and count == 0:   # Don't process the first 0-height, nothing to do here
+            continue;
+
+        if y_axis == prev_y:
+            processed_y = 0 # Not yet processed this y
+        else:
+            processed_y = 1 # Processing new y
+        prev_y = y_axis
+   
+        
+         
+       
+        lesser_width = x_axis # first width of our current height, so far.
+        if y_axis in starting_width:
+            # This height is in the dictionary already, check if the previous guy was in a different area
+    
+            if processed_y == 1:
+          
+                # This is an different height area which extends here, so check for heights to discard (if those height/area are < max area)
+                discard_list = []
+                # Find the starting width of this y --the starting width may have been prior to this, if prior height was 6 for example, and cur height is 2
+                for height in starting_width:
+                    # Loop thru each height in the startingwidth dict
+                    if  height > y_axis:
+                        discard_list.append(height)
+
+                        if(height != prev_max_area_height  and height != prev_max_area_height):
+
+                            lesser_width = starting_width[height]
+            
+               
+                        
+            
+        else:
+            # Our y_axis height not yet in the dictionary of starting widths -- add it in
+            discard_list = []
+            # Find the starting width of this y --the starting width may have been prior to this, if prior height was 6 for example, and current is 2
+            for height in starting_width:
+                
+                if  height > y_axis:   # Loop thru each height in the startingwidth dict
+                    #keep a list of the heights that are > our current height, as we need to check their areas and discard if areas are < max
+                  
+                    discard_list.append(height)
+                    if starting_width[height] < lesser_width and height != prev_max_area_height:
+                       
+                       lesser_width = starting_width[height]
+
+            starting_width[y_axis] = lesser_width # Save just the starting x axis of this height
+           
+        #print("PROCESSING ", x_axis, y_axis )
+
+        #print("For height, discard list is", y_axis, discard_list)
+        #print("dict is ", starting_width)
+    
+        
+        for discard_height in discard_list:
+            #print("Processing discard_list for  when discard height is ", discard_height, y_axis)
+            # Go thru the list of heights that were > our current y_axis, if any of their areas are not max, discard them
+            
+            # This height is less than previous,  so calculate the area of previous area and remove smaller areas from dict
+            
+            if discard_height == prev_max_area_height:
+                # This is our previous maximum height, we already have the area,  cannot recalculate cos we don't know x ending point here
+                continue
+            if discard_height not in starting_width:
+                # If we deleted this entry in this loop, then nothing else to check, continue
+                continue
+
+            previous_area = ( x_axis - starting_width[discard_height] ) * discard_height
+
+            #print("area is ", discard_height,  previous_area,  x_axis, starting_width[discard_height]) #area is  5 20 17 13
+            
+            if previous_area > max_area:   # New maximum area found
+                    
+                if prev_max_area_height in starting_width:
+                    del starting_width[prev_max_area_height] # delete the old maximum  area height from dict
+                    #print("Deleted previous max height from starting_width dict", prev_max_area_height)
+                prev_max_area_height = discard_height #  This is the height of the maximum area (so far)
+                max_area = previous_area  # New maximum area, so far
+                #print("NEW MAXIMUM area of for previous height", max_area, discard_height)
+            else:
+                # This area is not the max, delete it
+                del starting_width[discard_height]
+                #print("DELETED from dictionary a non max area: ", discard_height)
+        discard_list = {}
+
+        #print("END LOOP for y_axis, max area is ", y_axis, max_area, prev_max_area_height)
+        #print("dict is ", starting_width)
+        #print("Processed ", y_axis)
+     
+                
+    inputfile.close
+    # Print the max to the output file
+    file = open(output, "w")
+    print("Max area is ", max_area)
+    
+    print("Max area height is ", prev_max_area_height)
+    file.write(str(max_area))
+    file.close
+
+
+if __name__ == "__main__":
+    base_dir = Path(__file__).parent.absolute()
+    
+    print("base directory is ", base_dir)
+    # define the input directory
+    input_dir = os.path.join(base_dir, 'polygon_inputs')
+    input = input_dir + "\input-4.txt"
+    output_dir = os.path.join(base_dir, 'polygon_outputs')
+    output = output_dir + "\output1.txt"
+    print("The input file used is ", input)
+    polygon(input, output)
